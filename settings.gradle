@@ -1,0 +1,2 @@
+rootProject.name='My Widget'
+include ':app'
