@@ -13,7 +13,11 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.smit.mywidget.R;
+import com.smit.mywidget.ui.util.SavingFile;
 
+/**
+ * @author xiexi
+ */
 public class MainFragment extends Fragment {
 
     private MainViewModel mViewModel;
@@ -34,6 +38,8 @@ public class MainFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
         mViewModel = ViewModelProviders.of(this).get(MainViewModel.class);
         // TODO: Use the ViewModel
+        SavingFile savingFile = new SavingFile();
+        savingFile.saving();
     }
 
 }

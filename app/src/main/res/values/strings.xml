@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">My Widget</string>
+    <string name="storage_permissions_remind">无读写权限，不能保存数据</string>
 </resources>

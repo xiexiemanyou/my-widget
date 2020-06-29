@@ -27,7 +27,7 @@ public class ControlBar extends View {
     private final float LITTLE_ARC_PER_LENGTH = 0.0625f;
     private final float LITTLE_ARC_PER_WIDTH = 0.5f;
     private final float SPACING = DisplayHelper.dpToPx(2);
-    private final int MAX_VALUE = 20;
+    private final int MAX_VALUE = 50;
     private final int MIN_VALUE = 2;
     private final int HORIZONTAL = 100;
     private final int VERTICAL = 102;
@@ -45,9 +45,16 @@ public class ControlBar extends View {
     private int mValue;
     private float mSlope1;
     private float mSlope2;
-    private float mLeftTopMaxPathX;
-    private float mLeftTopMaxPathY;
-    private float mLeftBottomMaxPathY;
+    private float mLArcFirstPathX;
+    private float mLArcFirstPathY;
+    private float mLArcSecPathX;
+    private float mLArcSecPathY;
+    private float mBArcFirstPathX;
+    private float mBArcFirstPathY;
+    private float mBArcSecPathX;
+    private float mBArcSecPathY;
+    private float mLArcLength;
+    private float mBArcLength;
     private float mPercent;
     private int mDirection;
 
@@ -69,44 +76,81 @@ public class ControlBar extends View {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         mWidth = MeasureSpec.getSize(widthMeasureSpec) - getPaddingLeft() - getPaddingRight();
         mHeight = MeasureSpec.getSize(heightMeasureSpec) - getPaddingTop() - getPaddingBottom();
-        mBarWidth = mWidth - mHeight;
-        mBarHeight = (int) (mHeight * 0.6f);
-        mRadius = mHeight / 2;
+
         if(mWidth >= mHeight){
+            mBarWidth = mWidth - mHeight;
+            mBarHeight = (int) (mHeight * 0.6f);
+            mRadius = mHeight / 2;
             mDirection = HORIZONTAL;
             float startY = (mHeight - mBarHeight) / 2.0f;
-            mLeftTopMaxPathX = mRadius + mBarWidth * LITTLE_ARC_PER_LENGTH;
-            mLeftTopMaxPathY = startY + mBarHeight * (1.0f - LITTLE_ARC_PER_WIDTH) / 2.0f ;
-            float rightTopMaxPathX = mRadius + mBarWidth - mBarWidth * BIG_ARC_PER_LENGTH;
-            mLeftBottomMaxPathY = mLeftTopMaxPathY + mBarHeight * LITTLE_ARC_PER_WIDTH;
-            float rightBottomMaxPathY = startY + mBarHeight;
-            float leftRect = mRadius;
-            float rightRect = mRadius + mBarWidth;
-            float bottomRect = startY + mBarHeight;
-            mSlope1 = (startY - mLeftTopMaxPathY) / (rightTopMaxPathX - mLeftTopMaxPathX);
-            mSlope2 = (rightBottomMaxPathY - mLeftBottomMaxPathY) / (rightTopMaxPathX - mLeftTopMaxPathX) ;
+            mLArcLength = mBarWidth * LITTLE_ARC_PER_LENGTH;
+            mLArcFirstPathX = mRadius + mLArcLength;
+            mLArcFirstPathY = startY + mBarHeight * (1.0f - LITTLE_ARC_PER_WIDTH) / 2.0f ;
+            mBArcLength = mBarWidth * BIG_ARC_PER_LENGTH;
+            mBArcFirstPathX = mRadius + mBarWidth - mBArcLength;
+            mBArcFirstPathY = startY;
+            mBArcSecPathX = mBArcFirstPathX;
+            mBArcSecPathY = startY + mBarHeight;
+            mLArcSecPathX = mLArcFirstPathX;
+            mLArcSecPathY = mLArcFirstPathY + mBarHeight * LITTLE_ARC_PER_WIDTH;
+            mSlope1 = (startY - mLArcFirstPathY) / (mBArcFirstPathX - mLArcFirstPathX);
+            mSlope2 = (mBArcSecPathY - mLArcSecPathY) / (mBArcFirstPathX - mLArcFirstPathX) ;
 
             settingPath();
 
-            mMaxPath.moveTo(mLeftTopMaxPathX, mLeftTopMaxPathY);
-            mMaxPath.lineTo(rightTopMaxPathX, startY);
-            mMaxPath.arcTo(rightTopMaxPathX, startY, rightRect, bottomRect, -90, 180, false);
-            mMaxPath.lineTo(mLeftTopMaxPathX, mLeftBottomMaxPathY);
-            mMaxPath.arcTo(leftRect, mLeftTopMaxPathY, mLeftTopMaxPathX, mLeftBottomMaxPathY, 90, 180, false);
+            mMaxPath.moveTo(mLArcFirstPathX, mLArcFirstPathY);
+            mMaxPath.lineTo(mBArcFirstPathX, mBArcFirstPathY);
+            mMaxPath.arcTo(mBArcFirstPathX, mBArcFirstPathY, mBArcFirstPathX + mBArcLength, mBArcSecPathY, -90, 180, false);
+            mMaxPath.lineTo(mLArcFirstPathX, mLArcSecPathY);
+            mMaxPath.arcTo(mLArcFirstPathX - mLArcLength, mLArcFirstPathY, mLArcFirstPathX, mLArcSecPathY, 90, 180, false);
             mMaxPath.close();
 
-            mBgPath.moveTo(mLeftTopMaxPathX - SPACING, mLeftTopMaxPathY - SPACING);
-            mBgPath.lineTo(rightTopMaxPathX + SPACING, startY - SPACING);
-            mBgPath.arcTo(rightTopMaxPathX + SPACING, startY - SPACING, rightRect + SPACING, bottomRect + SPACING, -90, 180, false);
-            mBgPath.lineTo(mLeftTopMaxPathX - SPACING, mLeftBottomMaxPathY + SPACING);
-            mBgPath.arcTo(leftRect - SPACING, mLeftTopMaxPathY - SPACING, mLeftTopMaxPathX + SPACING, mLeftBottomMaxPathY + SPACING, 90, 180, false);
+            mBgPath.moveTo(mLArcFirstPathX - SPACING, mLArcFirstPathY - SPACING);
+            mBgPath.lineTo(mBArcFirstPathX + SPACING, mBArcFirstPathY - SPACING);
+            mBgPath.arcTo(mBArcFirstPathX + SPACING, mBArcFirstPathY - SPACING, mBArcFirstPathX + mBArcLength + SPACING, mBArcSecPathY + SPACING, -90, 180, false);
+            mBgPath.lineTo(mLArcFirstPathX - SPACING, mLArcSecPathY + SPACING);
+            mBgPath.arcTo(mLArcFirstPathX - mLArcLength - SPACING, mLArcFirstPathY - SPACING, mLArcFirstPathX + SPACING, mLArcSecPathY + SPACING, 90, 180, false);
             mBgPath.close();
 
-            LinearGradient gradient =new LinearGradient(mLeftTopMaxPathX, mLeftTopMaxPathY, rightTopMaxPathX, rightBottomMaxPathY, Color.BLUE, Color.RED, Shader.TileMode.CLAMP);
+            LinearGradient gradient =new LinearGradient(mLArcFirstPathX, mLArcFirstPathY, mBArcFirstPathX, mBArcSecPathY, Color.BLUE, Color.RED, Shader.TileMode.CLAMP);
             mPaint.setShader(gradient);
 
         }else {
+            mBarWidth = (int) (mWidth * 0.6f);;
+            mBarHeight = mHeight - mWidth;
+            mRadius = mWidth / 2;
+            mDirection = VERTICAL;
+            float startX = (mWidth - mBarWidth) / 2.0f;
+            mLArcFirstPathX = startX + mBarWidth * (1.0f - LITTLE_ARC_PER_WIDTH) / 2.0f;
+            mLArcFirstPathY = mRadius + mBarHeight * (1.0f - LITTLE_ARC_PER_LENGTH);
+            float rightTopMaxPathX = startX;
+            float mRightTopMaxPathY = mRadius + mBarHeight * BIG_ARC_PER_LENGTH;
+            mLArcSecPathY = mLArcFirstPathY;
+            float rightBottomMaxPathY = mRadius;
+            float leftRect = mRadius;
+            float rightRect = mRadius + mBarWidth;
+            float bottomRect = startX + mBarHeight;
+            mSlope1 = (mRightTopMaxPathY - mLArcFirstPathY) / (rightTopMaxPathX - mLArcFirstPathX);
+            mSlope2 = (rightBottomMaxPathY - mLArcSecPathY) / (rightTopMaxPathX - mLArcFirstPathX) ;
 
+            settingPath();
+
+            mMaxPath.moveTo(mLArcFirstPathX, mLArcFirstPathY);
+            mMaxPath.lineTo(rightTopMaxPathX, startX);
+            mMaxPath.arcTo(rightTopMaxPathX, startX, rightRect, bottomRect, -90, 180, false);
+            mMaxPath.lineTo(mLArcFirstPathX, mLArcSecPathY);
+            mMaxPath.arcTo(leftRect, mLArcFirstPathY, mLArcFirstPathX, mLArcSecPathY, 90, 180, false);
+            mMaxPath.close();
+
+            mBgPath.moveTo(mLArcFirstPathX - SPACING, mLArcFirstPathY - SPACING);
+            mBgPath.lineTo(rightTopMaxPathX + SPACING, startX - SPACING);
+            mBgPath.arcTo(rightTopMaxPathX + SPACING, startX - SPACING, rightRect + SPACING, bottomRect + SPACING, -90, 180, false);
+            mBgPath.lineTo(mLArcFirstPathX - SPACING, mLArcSecPathY + SPACING);
+            mBgPath.arcTo(leftRect - SPACING, mLArcFirstPathY - SPACING, mLArcFirstPathX + SPACING, mLArcSecPathY + SPACING, 90, 180, false);
+            mBgPath.close();
+
+            LinearGradient gradient =new LinearGradient(mLArcFirstPathX, mLArcFirstPathY, rightTopMaxPathX, rightBottomMaxPathY, Color.BLUE, Color.RED, Shader.TileMode.CLAMP);
+            mPaint.setShader(gradient);
         }
 
         setMeasuredDimension(mWidth, mHeight);
@@ -179,15 +223,15 @@ public class ControlBar extends View {
     private void settingPath(){
         mPath.reset();
         mPercent = (mValue - MIN_VALUE) * 1.0f / (MAX_VALUE - MIN_VALUE);
-        mPath.moveTo(mLeftTopMaxPathX, mLeftTopMaxPathY);
+        mPath.moveTo(mLArcFirstPathX, mLArcFirstPathY);
         float x1 = mRadius + mPercent * mBarWidth - mRadius * 0.45f;
-        float y1 = mSlope1*(x1- mLeftTopMaxPathX) + mLeftTopMaxPathY;
+        float y1 = mSlope1*(x1- mLArcFirstPathX) + mLArcFirstPathY;
         float x2 = x1 + mRadius * 0.45f;
-        float y2 = mSlope2*(x2 - mLeftTopMaxPathX) + mLeftBottomMaxPathY;
+        float y2 = mSlope2*(x2 - mLArcFirstPathX) + mLArcSecPathY;
         mPath.lineTo(x1 , y1);
         mPath.arcTo(x1, y1, x2, y2, -90, 180, false);
-        mPath.lineTo(mLeftTopMaxPathX, mLeftBottomMaxPathY);
-        mPath.arcTo(mRadius, mLeftTopMaxPathY, mLeftTopMaxPathX, mLeftBottomMaxPathY, 90, 180, false);
+        mPath.lineTo(mLArcSecPathX, mLArcSecPathY);
+        mPath.arcTo(mLArcFirstPathX - mLArcLength, mLArcFirstPathY, mLArcFirstPathX, mLArcSecPathY, 90, 180, false);
         mPath.close();
     }
 
