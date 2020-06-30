@@ -38,8 +38,6 @@ public class MainFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
         mViewModel = ViewModelProviders.of(this).get(MainViewModel.class);
         // TODO: Use the ViewModel
-        SavingFile savingFile = new SavingFile();
-        savingFile.saving();
     }
 
 }
